@@ -1,10 +1,17 @@
 import { serve } from "bun";
 import uploadPage from "./upload.html";
 import filesPage from "./files.html";
-import { readdir, stat, unlink } from "node:fs/promises";
+import { readdir, stat, unlink, mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { existsSync } from "node:fs";
 
 const UPLOAD_DIR = "./uploads";
+
+// Create uploads directory if it doesn't exist
+if (!existsSync(UPLOAD_DIR)) {
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  console.log("Created uploads directory");
+}
 
 // File metadata storage (in production, use a database)
 const fileMetadata = new Map<string, { uploadDate: Date }>();
@@ -66,6 +73,11 @@ const server = serve({
     "/api/files": {
       async GET() {
         try {
+          // Ensure directory exists before reading
+          if (!existsSync(UPLOAD_DIR)) {
+            await mkdir(UPLOAD_DIR, { recursive: true });
+          }
+          
           const files = await readdir(UPLOAD_DIR);
           const fileList = [];
           
