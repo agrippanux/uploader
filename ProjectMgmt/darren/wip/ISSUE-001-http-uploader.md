@@ -1,8 +1,8 @@
 # ISSUE-001: Build Simple HTTP Uploader
 
-**Status:** Open
+**Status:** WIP
 **Created:** 2025-08-04
-**Assignee:** Unassigned
+**Assignee:** Darren Craine
 **Priority:** High
 **Labels:** feature, frontend, backend
 
