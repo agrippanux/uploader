@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Uploader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drag-active {
+            background-color: rgb(219 234 254);
+            border-color: rgb(59 130 246);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex space-x-8 items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">File Uploader</h1>
+                    <div class="flex space-x-4">
+                        <a href="/upload" class="text-blue-600 hover:text-blue-800 px-3 py-2 text-sm font-medium border-b-2 border-blue-600">Upload</a>
+                        <a href="/files" class="text-gray-600 hover:text-gray-800 px-3 py-2 text-sm font-medium">Files</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Upload Files</h2>
+            
+            <!-- Drop Zone -->
+            <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center transition-colors duration-200">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="mt-4 text-lg text-gray-600">Drop files here or click to select</p>
+                <p class="mt-2 text-sm text-gray-500">Any file type • No size limit</p>
+                <input type="file" id="fileInput" multiple class="hidden">
+                <button id="selectBtn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Select Files
+                </button>
+            </div>
+
+            <!-- Selected Files List -->
+            <div id="filesList" class="mt-6 hidden">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Selected Files</h3>
+                <div id="filesContainer" class="space-y-2"></div>
+                <button id="uploadBtn" class="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                    Upload All Files
+                </button>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="uploadProgress" class="mt-6 hidden">
+                <div class="flex items-center justify-center">
+                    <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="ml-3 text-gray-600">Uploading files...</span>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="mt-6 hidden"></div>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectBtn = document.getElementById('selectBtn');
+        const filesList = document.getElementById('filesList');
+        const filesContainer = document.getElementById('filesContainer');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const results = document.getElementById('results');
+
+        let selectedFiles = [];
+
+        // Click to select files
+        selectBtn.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', (e) => {
+            if (e.target === selectBtn) return;
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-active');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-active');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Handle files
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            displayFiles();
+        }
+
+        // Display selected files
+        function displayFiles() {
+            if (selectedFiles.length === 0) {
+                filesList.classList.add('hidden');
+                return;
+            }
+
+            filesList.classList.remove('hidden');
+            filesContainer.innerHTML = selectedFiles.map((file, index) => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">${file.name}</p>
+                        <p class="text-sm text-gray-500">${formatFileSize(file.size)}</p>
+                    </div>
+                    <button onclick="removeFile(${index})" class="ml-4 text-red-600 hover:text-red-800">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Remove file from selection
+        window.removeFile = function(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+        };
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Upload files
+        uploadBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            // Show progress, hide other elements
+            filesList.classList.add('hidden');
+            uploadProgress.classList.remove('hidden');
+            results.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess(data.files);
+                } else {
+                    showError(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                uploadProgress.classList.add('hidden');
+                selectedFiles = [];
+                fileInput.value = '';
+            }
+        });
+
+        // Show success message
+        function showSuccess(files) {
+            results.innerHTML = `
+                <div class="rounded-md bg-green-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Upload successful!</h3>
+                            <div class="mt-2 text-sm text-green-700">
+                                <p class="mb-2">${files.length} file(s) uploaded successfully:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    ${files.map(file => `
+                                        <li>
+                                            ${file.filename} (${formatFileSize(file.size)}) - 
+                                            <a href="${file.url}" class="underline hover:text-green-900" target="_blank">Download</a>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            results.classList.remove('hidden');
+        }
+
+        // Show error message
+        function showError(message) {
+            results.innerHTML = `
+                <div class="rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Upload failed</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p>${message}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            results.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
