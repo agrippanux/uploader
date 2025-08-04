@@ -29,6 +29,7 @@ Requirements:
 ## Tasks
 
 - [ ] Set up project structure and create uploads directory
+- [ ] Add uploads/ to .gitignore to avoid committing uploaded files
 - [ ] Create Bun server with routes for upload, listing, and file serving
 - [ ] Build upload page with drag-and-drop and multi-file support
 - [ ] Build file listing page with delete functionality
